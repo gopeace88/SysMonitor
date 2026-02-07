@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8400:8000"
+    volumes:
+      - ./data:/app/data
+      - ${HOME}/.ssh/sysmonitor_nas:/app/.ssh/sysmonitor_nas:ro
+    env_file: .env
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3400:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8400
+    depends_on:
+      - backend
+    restart: unless-stopped
