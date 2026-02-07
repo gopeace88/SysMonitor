@@ -6,6 +6,7 @@ services:
     volumes:
       - ./data:/app/data
       - ${HOME}/.ssh/sysmonitor_nas:/app/.ssh/sysmonitor_nas:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     env_file: .env
     restart: unless-stopped
 
