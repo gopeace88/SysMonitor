@@ -20,18 +20,18 @@ import React from "react";
 
 export default function DashboardPage() {
   const { data: servers, isLoading: serversLoading } = useServers();
-  const { setServer } = useServerStore();
+  const { selectedServer, setServer } = useServerStore();
   const { data: activeAlerts } = useActiveAlerts();
 
-  const server1Id = servers?.[0]?.id ?? null;
-  const server2Id = servers?.[1]?.id ?? null;
+  // Use selected server, or default to first server
+  const serverId = selectedServer || servers?.[0]?.id || null;
 
-  const { data: overview1 } = useServerOverview(server1Id);
-  const { data: cpu1 } = useServerCpu(server1Id);
-  const { data: mem1 } = useServerMemory(server1Id);
-  const { data: disk1 } = useServerDisk(server1Id);
-  const { data: net1 } = useServerNetwork(server1Id);
-  const { data: docker1 } = useServerDocker(server1Id);
+  const { data: overview1 } = useServerOverview(serverId);
+  const { data: cpu1 } = useServerCpu(serverId);
+  const { data: mem1 } = useServerMemory(serverId);
+  const { data: disk1 } = useServerDisk(serverId);
+  const { data: net1 } = useServerNetwork(serverId);
+  const { data: docker1 } = useServerDocker(serverId);
 
   if (serversLoading) {
     return (
@@ -153,32 +153,27 @@ export default function DashboardPage() {
 
       {/* Row 1: Server cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {servers?.[0] && (
+        {servers?.map((s) => (
           <ServerCard
-            server={servers[0]}
-            onClick={() => setServer(servers[0].id)}
+            key={s.id}
+            server={s}
+            onClick={() => setServer(s.id)}
           />
-        )}
-        {servers?.[1] && (
-          <ServerCard
-            server={servers[1]}
-            onClick={() => setServer(servers[1].id)}
-          />
-        )}
+        ))}
       </div>
 
       {/* Row 2: CPU + Memory time series */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TimeSeriesChart
           data={cpuHistory}
-          title={`CPU Usage - ${overview1?.name ?? "Server 1"}`}
+          title={`CPU Usage - ${overview1?.name ?? "Server"}`}
           color="#3b82f6"
           height={200}
           yAxisFormat={(v) => `${v}%`}
         />
         <TimeSeriesChart
           data={memHistory}
-          title={`Memory Usage - ${overview1?.name ?? "Server 1"}`}
+          title={`Memory Usage - ${overview1?.name ?? "Server"}`}
           color="#8b5cf6"
           height={200}
           yAxisFormat={(v) => `${v}%`}
@@ -206,7 +201,7 @@ export default function DashboardPage() {
         <DataTable
           columns={dockerColumns}
           data={(docker1?.containers as unknown as Record<string, unknown>[]) ?? []}
-          title={`Docker Containers - ${overview1?.name ?? "Server 1"}`}
+          title={`Docker Containers - ${overview1?.name ?? "Server"}`}
           maxHeight="250px"
         />
         <DataTable
