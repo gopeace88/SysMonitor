@@ -21,7 +21,7 @@ export default function AlertsPage() {
 
   const handleAcknowledge = async (alertId: string) => {
     try {
-      await apiPost(`/api/alerts/${alertId}/acknowledge`, {});
+      await apiPost(`/api/v1/alerts/${alertId}/acknowledge`, {});
       mutateActive();
       mutateAll();
     } catch (err) {

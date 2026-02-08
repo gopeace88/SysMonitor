@@ -121,37 +121,37 @@ export interface Alert {
 }
 
 export function useServers() {
-  return useFetch<Server[]>("/api/servers");
+  return useFetch<Server[]>("/api/v1/servers");
 }
 
 export function useServerOverview(id: string | null) {
-  return useFetch<ServerOverview>(id ? `/api/servers/${id}/overview` : null);
+  return useFetch<ServerOverview>(id ? `/api/v1/servers/${id}/overview` : null);
 }
 
 export function useServerCpu(id: string | null) {
-  return useFetch<CpuData>(id ? `/api/servers/${id}/cpu` : null);
+  return useFetch<CpuData>(id ? `/api/v1/servers/${id}/cpu` : null);
 }
 
 export function useServerMemory(id: string | null) {
-  return useFetch<MemoryData>(id ? `/api/servers/${id}/memory` : null);
+  return useFetch<MemoryData>(id ? `/api/v1/servers/${id}/memory` : null);
 }
 
 export function useServerDisk(id: string | null) {
-  return useFetch<DiskData>(id ? `/api/servers/${id}/disks` : null);
+  return useFetch<DiskData>(id ? `/api/v1/servers/${id}/disks` : null);
 }
 
 export function useServerNetwork(id: string | null) {
-  return useFetch<NetworkData>(id ? `/api/servers/${id}/network` : null);
+  return useFetch<NetworkData>(id ? `/api/v1/servers/${id}/network` : null);
 }
 
 export function useServerDocker(id: string | null) {
-  return useFetch<DockerData>(id ? `/api/servers/${id}/docker` : null);
+  return useFetch<DockerData>(id ? `/api/v1/servers/${id}/docker` : null);
 }
 
 export function useAlerts() {
-  return useFetch<Alert[]>("/api/alerts");
+  return useFetch<Alert[]>("/api/v1/alerts");
 }
 
 export function useActiveAlerts() {
-  return useFetch<Alert[]>("/api/alerts/active");
+  return useFetch<Alert[]>("/api/v1/alerts/active");
 }
