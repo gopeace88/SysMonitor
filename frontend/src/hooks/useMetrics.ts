@@ -17,61 +17,119 @@ function useFetch<T>(path: string | null) {
   );
 }
 
+// GET /api/v1/servers
 export interface Server {
   id: string;
   name: string;
   ip: string;
-  status: "online" | "offline" | "warning";
-  cpu_percent: number;
-  memory_percent: number;
-  uptime: number;
   os: string;
-  hostname: string;
+  status: string; // "up" | "down"
+  cpu_percent: number;
+  mem_percent: number;
+  uptime_seconds: number;
 }
 
+// GET /api/v1/servers/{id}/overview
 export interface ServerOverview {
   id: string;
   name: string;
-  cpu_percent: number;
-  memory_percent: number;
-  memory_used: number;
-  memory_total: number;
-  disk_used: number;
-  disk_total: number;
-  network_rx: number;
-  network_tx: number;
-  uptime: number;
-  load_avg: [number, number, number];
-  cpu_cores: number;
+  ip: string;
+  os: string;
+  metrics: {
+    cpu: {
+      usage_percent: number;
+      per_core: number[];
+      load_avg: number[];
+      count: { physical: number; logical: number };
+    };
+    memory: {
+      total_gb: number;
+      used_gb: number;
+      available_gb: number;
+      percent: number;
+      swap_total_gb: number;
+      swap_used_gb: number;
+      swap_percent: number;
+    };
+    disks: Array<{
+      device: string;
+      mountpoint: string;
+      fstype: string;
+      total_gb: number;
+      used_gb: number;
+      free_gb: number;
+      percent: number;
+    }>;
+    network: {
+      interfaces: Array<{
+        name: string;
+        is_up: boolean;
+        speed_mbps: number;
+        rx_bytes: number;
+        tx_bytes: number;
+        rx_bytes_sec: number;
+        tx_bytes_sec: number;
+      }>;
+    };
+    docker: Array<{
+      id: string;
+      name: string;
+      image: string;
+      status: string;
+      state: string;
+      created: string;
+      ports: string;
+    }>;
+    uptime_seconds: number;
+    process_count: {
+      total: number;
+      running: number;
+      sleeping: number;
+      zombie: number;
+    };
+    top_processes: Array<{
+      pid: number;
+      name: string;
+      cpu_percent: number;
+      memory_percent: number;
+    }>;
+    timestamp: number;
+  };
 }
 
+// GET /api/v1/servers/{id}/cpu
 export interface CpuData {
-  usage_history: Array<{ timestamp: string; value: number }>;
-  per_core: Array<{ core: number; percent: number }>;
-  load_avg: [number, number, number];
-  cpu_model: string;
-  cpu_cores: number;
-  cpu_threads: number;
-  current_percent: number;
+  current: {
+    usage_percent: number;
+    per_core: number[];
+    load_avg: number[];
+    count: { physical: number; logical: number };
+  };
+  history: Array<{ timestamp: number; usage_percent: number }>;
 }
 
+// GET /api/v1/servers/{id}/memory
 export interface MemoryData {
-  usage_history: Array<{ timestamp: string; value: number }>;
-  total: number;
-  used: number;
-  available: number;
-  swap_total: number;
-  swap_used: number;
-  percent: number;
+  current: {
+    total_gb: number;
+    used_gb: number;
+    available_gb: number;
+    percent: number;
+    swap_total_gb: number;
+    swap_used_gb: number;
+    swap_percent: number;
+  };
+  history: Array<{ timestamp: number; percent: number }>;
 }
 
+// GET /api/v1/servers/{id}/disk
 export interface DiskInfo {
-  mount: string;
   device: string;
+  mountpoint: string;
   fstype: string;
-  total: number;
-  used: number;
-  free: number;
+  total_gb: number;
+  used_gb: number;
+  free_gb: number;
   percent: number;
 }
 
@@ -79,19 +137,34 @@ export interface DiskData {
   disks: DiskInfo[];
 }
 
+// GET /api/v1/servers/{id}/network
+export interface NetworkInterface {
+  name: string;
+  is_up: boolean;
+  speed_mbps: number;
+  rx_bytes: number;
+  tx_bytes: number;
+  rx_bytes_sec: number;
+  tx_bytes_sec: number;
+  rx_packets: number;
+  tx_packets: number;
+  errors_in: number;
+  errors_out: number;
+  drops_in: number;
+  drops_out: number;
+}
+
 export interface NetworkData {
-  rx_history: Array<{ timestamp: string; value: number }>;
-  tx_history: Array<{ timestamp: string; value: number }>;
-  interfaces: Array<{
-    name: string;
-    rx_bytes: number;
-    tx_bytes: number;
-    rx_rate: number;
-    tx_rate: number;
-    status: string;
+  current: {
+    interfaces: NetworkInterface[];
+  };
+  history: Array<{
+    timestamp: number;
+    interfaces: NetworkInterface[];
   }>;
 }
 
+// GET /api/v1/servers/{id}/docker
 export interface DockerContainer {
   id: string;
   name: string;
@@ -100,24 +173,39 @@ export interface DockerContainer {
   state: string;
   ports: string;
   created: string;
-  cpu_percent: number;
-  memory_usage: number;
-  memory_limit: number;
 }
 
 export interface DockerData {
   containers: DockerContainer[];
 }
 
+// GET /api/v1/servers/{id}/processes
+export interface ProcessData {
+  count: {
+    total: number;
+    running: number;
+    sleeping: number;
+    zombie: number;
+  };
+  top: Array<{
+    pid: number;
+    name: string;
+    cpu_percent: number;
+    memory_percent: number;
+  }>;
+}
+
+// GET /api/v1/alerts
 export interface Alert {
-  id: string;
+  id: number;
   server_id: string;
-  server_name: string;
-  severity: "info" | "warning" | "critical";
+  metric: string;
+  severity: string; // "warning" | "critical"
   message: string;
+  value: number;
+  threshold: number;
   timestamp: string;
   acknowledged: boolean;
-  type: string;
 }
 
 export function useServers() {
@@ -137,7 +225,7 @@ export function useServerMemory(id: string | null) {
 }
 
 export function useServerDisk(id: string | null) {
-  return useFetch<DiskData>(id ? `/api/v1/servers/${id}/disks` : null);
+  return useFetch<DiskData>(id ? `/api/v1/servers/${id}/disk` : null);
 }
 
 export function useServerNetwork(id: string | null) {
@@ -146,6 +234,10 @@ export function useServerNetwork(id: string | null) {
 
 export function useServerDocker(id: string | null) {
   return useFetch<DockerData>(id ? `/api/v1/servers/${id}/docker` : null);
+}
+
+export function useServerProcesses(id: string | null) {
+  return useFetch<ProcessData>(id ? `/api/v1/servers/${id}/processes` : null);
 }
 
 export function useAlerts() {

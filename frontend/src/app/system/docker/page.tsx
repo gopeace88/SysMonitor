@@ -3,7 +3,6 @@
 import { useServerStore } from "@/stores/serverStore";
 import { useServerDocker, useServers } from "@/hooks/useMetrics";
 import DataTable from "@/components/tables/DataTable";
-import { formatBytes, formatPercent } from "@/lib/format";
 import React from "react";
 
 export default function DockerPage() {
@@ -58,23 +57,15 @@ export default function DockerPage() {
     {
       key: "state",
       label: "Status",
-      format: (value: unknown, row: Record<string, unknown>) => {
+      format: (value: unknown) => {
         const state = value as string;
-        const status = row.status as string;
         const color =
           state === "running"
             ? "text-sm-ok"
             : state === "exited"
               ? "text-sm-error"
               : "text-sm-warn";
-        return (
-          <div>
-            <span className={`font-semibold ${color}`}>{state}</span>
-            {status && (
-              <div className="text-[10px] text-sm-text-dim">{status}</div>
-            )}
-          </div>
-        );
+        return <span className={`font-semibold ${color}`}>{state}</span>;
       },
     },
     {
@@ -85,33 +76,6 @@ export default function DockerPage() {
           {(value as string) || "-"}
         </span>
       ),
-    },
-    {
-      key: "cpu_percent",
-      label: "CPU",
-      align: "right" as const,
-      format: (value: unknown) => (
-        <span className="font-mono">{formatPercent(value as number)}</span>
-      ),
-    },
-    {
-      key: "memory_usage",
-      label: "Memory",
-      align: "right" as const,
-      format: (value: unknown, row: Record<string, unknown>) => {
-        const usage = value as number;
-        const limit = row.memory_limit as number;
-        return (
-          <div className="text-right">
-            <span className="font-mono">{formatBytes(usage)}</span>
-            {limit > 0 && (
-              <span className="text-sm-text-dim text-[10px] ml-1">
-                / {formatBytes(limit)}
-              </span>
-            )}
-          </div>
-        );
-      },
     },
   ];
 

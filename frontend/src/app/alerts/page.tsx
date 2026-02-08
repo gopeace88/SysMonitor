@@ -19,7 +19,7 @@ export default function AlertsPage() {
     mutate: mutateAll,
   } = useAlerts();
 
-  const handleAcknowledge = async (alertId: string) => {
+  const handleAcknowledge = async (alertId: number) => {
     try {
       await apiPost(`/api/v1/alerts/${alertId}/acknowledge`, {});
       mutateActive();
@@ -51,13 +51,13 @@ export default function AlertsPage() {
       },
     },
     {
-      key: "server_name",
+      key: "server_id",
       label: "Server",
       format: (value: unknown) => (
         <span className="font-semibold text-sm-text">{value as string}</span>
       ),
     },
-    { key: "type", label: "Type" },
+    { key: "metric", label: "Metric" },
     { key: "message", label: "Message" },
     {
       key: "timestamp",
@@ -89,7 +89,7 @@ export default function AlertsPage() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleAcknowledge(row.id as string);
+              handleAcknowledge(row.id as number);
             }}
             className="bg-sm-link/20 text-sm-link text-[10px] px-2 py-0.5 rounded hover:bg-sm-link/30 transition-colors"
           >
@@ -104,7 +104,6 @@ export default function AlertsPage() {
   const alerts: Alert[] =
     tab === "active" ? activeAlerts ?? [] : allAlerts ?? [];
 
-  // Sort by severity: critical > warning > info
   const severityOrder: Record<string, number> = {
     critical: 0,
     warning: 1,
@@ -117,7 +116,6 @@ export default function AlertsPage() {
 
   const criticalCount = alerts.filter((a) => a.severity === "critical").length;
   const warningCount = alerts.filter((a) => a.severity === "warning").length;
-  const infoCount = alerts.filter((a) => a.severity === "info").length;
 
   return (
     <div className="space-y-4">
@@ -134,11 +132,6 @@ export default function AlertsPage() {
             <span className="w-2 h-2 rounded-full bg-sm-warn" />
             <span className="font-mono text-sm-warn">{warningCount}</span>
             <span className="text-sm-text-dim">warning</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-sm-link" />
-            <span className="font-mono text-sm-link">{infoCount}</span>
-            <span className="text-sm-text-dim">info</span>
           </span>
         </div>
       </div>
@@ -181,6 +174,10 @@ export default function AlertsPage() {
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="text-sm-text-dim text-sm">Loading alerts...</div>
+        </div>
+      ) : alerts.length === 0 ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-sm-text-dim text-sm">No alerts.</div>
         </div>
       ) : (
         <DataTable

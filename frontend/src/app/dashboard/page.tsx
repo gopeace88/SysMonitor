@@ -14,7 +14,7 @@ import ServerCard from "@/components/cards/ServerCard";
 import TimeSeriesChart from "@/components/charts/TimeSeriesChart";
 import BarChart from "@/components/charts/BarChart";
 import DataTable from "@/components/tables/DataTable";
-import { formatBytes, formatPercent, formatBps } from "@/lib/format";
+import { formatPercent, formatBps } from "@/lib/format";
 import { useServerStore } from "@/stores/serverStore";
 import React from "react";
 
@@ -23,12 +23,10 @@ export default function DashboardPage() {
   const { setServer } = useServerStore();
   const { data: activeAlerts } = useActiveAlerts();
 
-  // Get first two servers (Purions00, RTK NAS)
   const server1Id = servers?.[0]?.id ?? null;
   const server2Id = servers?.[1]?.id ?? null;
 
   const { data: overview1 } = useServerOverview(server1Id);
-  const { data: overview2 } = useServerOverview(server2Id);
   const { data: cpu1 } = useServerCpu(server1Id);
   const { data: mem1 } = useServerMemory(server1Id);
   const { data: disk1 } = useServerDisk(server1Id);
@@ -61,22 +59,7 @@ export default function DashboardPage() {
         return <span className={color}>{state}</span>;
       },
     },
-    {
-      key: "cpu_percent",
-      label: "CPU",
-      align: "right" as const,
-      format: (value: unknown) => (
-        <span className="font-mono">{formatPercent(value as number)}</span>
-      ),
-    },
-    {
-      key: "memory_usage",
-      label: "Memory",
-      align: "right" as const,
-      format: (value: unknown) => (
-        <span className="font-mono">{formatBytes(value as number)}</span>
-      ),
-    },
+    { key: "ports", label: "Ports" },
   ];
 
   // Alerts table columns
@@ -101,7 +84,7 @@ export default function DashboardPage() {
         );
       },
     },
-    { key: "server_name", label: "Server" },
+    { key: "server_id", label: "Server" },
     { key: "message", label: "Message" },
     {
       key: "timestamp",
@@ -114,20 +97,42 @@ export default function DashboardPage() {
     },
   ];
 
-  // Disk data for bar chart
+  // CPU history for time series chart
+  const cpuHistory = cpu1?.history.map((h) => ({
+    timestamp: h.timestamp,
+    value: h.usage_percent,
+  })) ?? [];
+
+  // Memory history for time series chart
+  const memHistory = mem1?.history.map((h) => ({
+    timestamp: h.timestamp,
+    value: h.percent,
+  })) ?? [];
+
+  // Disk data for bar chart (values in GB)
   const diskBarData =
     disk1?.disks.map((d) => ({
-      label: d.mount,
-      value: d.used,
-      max: d.total,
+      label: d.mountpoint,
+      value: d.used_gb,
+      max: d.total_gb,
     })) ?? [];
 
-  // Network data for time series chart
+  // Network data for time series: sum rx+tx from first interface across history
   const networkData =
-    net1?.rx_history.map((d, i) => ({
-      timestamp: d.timestamp,
-      value: d.value + (net1?.tx_history[i]?.value ?? 0),
-    })) ?? [];
+    net1?.history.map((h) => {
+      const iface = h.interfaces?.[0];
+      return {
+        timestamp: h.timestamp,
+        value: (iface?.rx_bytes_sec ?? 0) + (iface?.tx_bytes_sec ?? 0),
+      };
+    }) ?? [];
+
+  // Overview metrics
+  const cpuPercent = overview1?.metrics?.cpu?.usage_percent ?? 0;
+  const memUsedGb = overview1?.metrics?.memory?.used_gb ?? 0;
+  const memTotalGb = overview1?.metrics?.memory?.total_gb ?? 0;
+  const netRx = overview1?.metrics?.network?.interfaces?.[0]?.rx_bytes_sec ?? 0;
+  const netTx = overview1?.metrics?.network?.interfaces?.[0]?.tx_bytes_sec ?? 0;
 
   return (
     <div className="space-y-4">
@@ -165,14 +170,14 @@ export default function DashboardPage() {
       {/* Row 2: CPU + Memory time series */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TimeSeriesChart
-          data={cpu1?.usage_history ?? []}
+          data={cpuHistory}
           title={`CPU Usage - ${overview1?.name ?? "Server 1"}`}
           color="#3b82f6"
           height={200}
           yAxisFormat={(v) => `${v}%`}
         />
         <TimeSeriesChart
-          data={mem1?.usage_history ?? []}
+          data={memHistory}
           title={`Memory Usage - ${overview1?.name ?? "Server 1"}`}
           color="#8b5cf6"
           height={200}
@@ -219,7 +224,7 @@ export default function DashboardPage() {
             Total CPU
           </div>
           <div className="font-mono text-lg font-semibold text-sm-link">
-            {overview1 ? formatPercent(overview1.cpu_percent) : "--"}
+            {formatPercent(cpuPercent)}
           </div>
         </div>
         <div className="bg-sm-surface border border-[#2d3a4f] rounded-lg p-3">
@@ -227,9 +232,9 @@ export default function DashboardPage() {
             Total Memory
           </div>
           <div className="font-mono text-lg font-semibold text-purple-400">
-            {overview1 ? formatBytes(overview1.memory_used) : "--"}{" "}
+            {memUsedGb.toFixed(1)} GB{" "}
             <span className="text-xs text-sm-text-dim">
-              / {overview1 ? formatBytes(overview1.memory_total) : "--"}
+              / {memTotalGb.toFixed(1)} GB
             </span>
           </div>
         </div>
@@ -238,7 +243,7 @@ export default function DashboardPage() {
             Network RX
           </div>
           <div className="font-mono text-lg font-semibold text-sm-ok">
-            {overview1 ? formatBps(overview1.network_rx) : "--"}
+            {formatBps(netRx)}
           </div>
         </div>
         <div className="bg-sm-surface border border-[#2d3a4f] rounded-lg p-3">
@@ -246,7 +251,7 @@ export default function DashboardPage() {
             Network TX
           </div>
           <div className="font-mono text-lg font-semibold text-sm-warn">
-            {overview1 ? formatBps(overview1.network_tx) : "--"}
+            {formatBps(netTx)}
           </div>
         </div>
       </div>

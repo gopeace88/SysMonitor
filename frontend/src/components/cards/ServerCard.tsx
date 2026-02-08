@@ -1,29 +1,16 @@
 "use client";
 
 import { formatPercent, formatDuration } from "@/lib/format";
-
-interface ServerData {
-  id: string;
-  name: string;
-  ip: string;
-  status: "online" | "offline" | "warning";
-  cpu_percent: number;
-  memory_percent: number;
-  uptime: number;
-}
+import type { Server } from "@/hooks/useMetrics";
 
 interface ServerCardProps {
-  server: ServerData;
+  server: Server;
   onClick?: () => void;
 }
 
 export default function ServerCard({ server, onClick }: ServerCardProps) {
-  const statusColor =
-    server.status === "online"
-      ? "bg-sm-ok"
-      : server.status === "warning"
-        ? "bg-sm-warn"
-        : "bg-sm-error";
+  const isUp = server.status === "up";
+  const statusColor = isUp ? "bg-sm-ok" : "bg-sm-error";
 
   const cpuColor =
     server.cpu_percent < 60
@@ -33,9 +20,9 @@ export default function ServerCard({ server, onClick }: ServerCardProps) {
         : "text-sm-error";
 
   const memColor =
-    server.memory_percent < 60
+    server.mem_percent < 60
       ? "text-sm-ok"
-      : server.memory_percent < 85
+      : server.mem_percent < 85
         ? "text-sm-warn"
         : "text-sm-error";
 
@@ -49,7 +36,7 @@ export default function ServerCard({ server, onClick }: ServerCardProps) {
         <div className="flex items-center gap-2">
           <span
             className={`w-2 h-2 rounded-full ${statusColor} ${
-              server.status === "online" ? "animate-pulse" : ""
+              isUp ? "animate-pulse" : ""
             }`}
           />
           <span className="text-sm font-semibold text-sm-text">
@@ -91,18 +78,18 @@ export default function ServerCard({ server, onClick }: ServerCardProps) {
             MEM
           </div>
           <div className={`font-mono text-sm font-semibold ${memColor}`}>
-            {formatPercent(server.memory_percent)}
+            {formatPercent(server.mem_percent)}
           </div>
           <div className="mt-1 h-1 bg-[#2d3a4f] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                server.memory_percent < 60
+                server.mem_percent < 60
                   ? "bg-sm-ok"
-                  : server.memory_percent < 85
+                  : server.mem_percent < 85
                     ? "bg-sm-warn"
                     : "bg-sm-error"
               }`}
-              style={{ width: `${Math.min(server.memory_percent, 100)}%` }}
+              style={{ width: `${Math.min(server.mem_percent, 100)}%` }}
             />
           </div>
         </div>
@@ -113,7 +100,7 @@ export default function ServerCard({ server, onClick }: ServerCardProps) {
             Uptime
           </div>
           <div className="font-mono text-sm font-semibold text-sm-text">
-            {formatDuration(server.uptime)}
+            {formatDuration(server.uptime_seconds)}
           </div>
         </div>
       </div>

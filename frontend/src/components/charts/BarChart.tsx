@@ -62,9 +62,8 @@ export default function BarChart({ data, title, height = 200 }: BarChartProps) {
         formatter: (params: Array<{ name: string; seriesName: string; value: number }>) => {
           const item = data.find((d) => d.label === params[0].name);
           if (!item) return "";
-          const pct = ((item.value / item.max) * 100).toFixed(1);
-          const toGB = (v: number) => (v / (1024 * 1024 * 1024)).toFixed(1);
-          return `<b>${item.label}</b><br/>Used: ${toGB(item.value)} GB<br/>Total: ${toGB(item.max)} GB<br/>Usage: ${pct}%`;
+          const pct = item.max > 0 ? ((item.value / item.max) * 100).toFixed(1) : "0.0";
+          return `<b>${item.label}</b><br/>Used: ${item.value.toFixed(1)} GB<br/>Total: ${item.max.toFixed(1)} GB<br/>Usage: ${pct}%`;
         },
       },
       grid: {

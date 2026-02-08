@@ -4,7 +4,7 @@ import { useServerStore } from "@/stores/serverStore";
 import { useServerDisk, useServers } from "@/hooks/useMetrics";
 import BarChart from "@/components/charts/BarChart";
 import DataTable from "@/components/tables/DataTable";
-import { formatBytes, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import React from "react";
 
 export default function DisksPage() {
@@ -40,37 +40,37 @@ export default function DisksPage() {
   }
 
   const barData = diskData.disks.map((d) => ({
-    label: d.mount,
-    value: d.used,
-    max: d.total,
+    label: d.mountpoint,
+    value: d.used_gb,
+    max: d.total_gb,
   }));
 
   const diskColumns = [
-    { key: "mount", label: "Mount Point" },
+    { key: "mountpoint", label: "Mount Point" },
     { key: "device", label: "Device" },
     { key: "fstype", label: "FS Type" },
     {
-      key: "total",
+      key: "total_gb",
       label: "Total",
       align: "right" as const,
       format: (value: unknown) => (
-        <span className="font-mono">{formatBytes(value as number)}</span>
+        <span className="font-mono">{(value as number).toFixed(1)} GB</span>
       ),
     },
     {
-      key: "used",
+      key: "used_gb",
       label: "Used",
       align: "right" as const,
       format: (value: unknown) => (
-        <span className="font-mono">{formatBytes(value as number)}</span>
+        <span className="font-mono">{(value as number).toFixed(1)} GB</span>
       ),
     },
     {
-      key: "free",
+      key: "free_gb",
       label: "Free",
       align: "right" as const,
       format: (value: unknown) => (
-        <span className="font-mono">{formatBytes(value as number)}</span>
+        <span className="font-mono">{(value as number).toFixed(1)} GB</span>
       ),
     },
     {
@@ -142,12 +142,12 @@ export default function DisksPage() {
 
           return (
             <div
-              key={disk.mount}
+              key={disk.mountpoint}
               className="bg-sm-surface border border-[#2d3a4f] rounded-lg p-3"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-sm-text truncate">
-                  {disk.mount}
+                  {disk.mountpoint}
                 </span>
                 <span className={`font-mono text-xs font-semibold ${color}`}>
                   {formatPercent(pct)}
@@ -161,9 +161,9 @@ export default function DisksPage() {
               </div>
               <div className="flex justify-between text-[10px] text-sm-text-dim">
                 <span>
-                  {formatBytes(disk.used)} / {formatBytes(disk.total)}
+                  {disk.used_gb.toFixed(1)} GB / {disk.total_gb.toFixed(1)} GB
                 </span>
-                <span>{formatBytes(disk.free)} free</span>
+                <span>{disk.free_gb.toFixed(1)} GB free</span>
               </div>
               <div className="text-[10px] text-sm-text-dim mt-1">
                 {disk.device} &middot; {disk.fstype}

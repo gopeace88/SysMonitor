@@ -37,33 +37,35 @@ export default function CpuPage() {
     );
   }
 
+  const current = cpuData.current;
+  const physicalCores = current.count?.physical ?? 0;
+  const logicalCores = current.count?.logical ?? 0;
+
+  // Convert history to chart format
+  const historyData = cpuData.history.map((h) => ({
+    timestamp: h.timestamp,
+    value: h.usage_percent,
+  }));
+
   return (
     <div className="space-y-4">
       {/* CPU info header */}
       <div className="bg-sm-surface border border-[#2d3a4f] rounded-lg p-3">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <div className="text-[10px] text-sm-text-dim uppercase tracking-wider">
-              Model
+              Physical Cores
             </div>
-            <div className="text-xs text-sm-text mt-0.5 truncate">
-              {cpuData.cpu_model}
+            <div className="font-mono text-xs text-sm-text mt-0.5">
+              {physicalCores}
             </div>
           </div>
           <div>
             <div className="text-[10px] text-sm-text-dim uppercase tracking-wider">
-              Cores
+              Logical Cores
             </div>
             <div className="font-mono text-xs text-sm-text mt-0.5">
-              {cpuData.cpu_cores}
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] text-sm-text-dim uppercase tracking-wider">
-              Threads
-            </div>
-            <div className="font-mono text-xs text-sm-text mt-0.5">
-              {cpuData.cpu_threads}
+              {logicalCores}
             </div>
           </div>
           <div>
@@ -72,14 +74,14 @@ export default function CpuPage() {
             </div>
             <div
               className={`font-mono text-xs mt-0.5 font-semibold ${
-                cpuData.current_percent < 60
+                current.usage_percent < 60
                   ? "text-sm-ok"
-                  : cpuData.current_percent < 85
+                  : current.usage_percent < 85
                     ? "text-sm-warn"
                     : "text-sm-error"
               }`}
             >
-              {formatPercent(cpuData.current_percent)}
+              {formatPercent(current.usage_percent)}
             </div>
           </div>
           <div>
@@ -87,7 +89,7 @@ export default function CpuPage() {
               Load Average
             </div>
             <div className="font-mono text-xs text-sm-text mt-0.5">
-              {cpuData.load_avg.map((l) => l.toFixed(2)).join(" / ")}
+              {current.load_avg?.map((l) => l.toFixed(2)).join(" / ") ?? "--"}
             </div>
           </div>
         </div>
@@ -95,7 +97,7 @@ export default function CpuPage() {
 
       {/* CPU usage time series */}
       <TimeSeriesChart
-        data={cpuData.usage_history}
+        data={historyData}
         title="CPU Usage Over Time"
         color="#3b82f6"
         height={250}
@@ -108,34 +110,34 @@ export default function CpuPage() {
           Per-Core Usage
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
-          {cpuData.per_core.map((core) => {
+          {current.per_core.map((percent, idx) => {
             const color =
-              core.percent < 60
+              percent < 60
                 ? "bg-sm-ok"
-                : core.percent < 85
+                : percent < 85
                   ? "bg-sm-warn"
                   : "bg-sm-error";
             const textColor =
-              core.percent < 60
+              percent < 60
                 ? "text-sm-ok"
-                : core.percent < 85
+                : percent < 85
                   ? "text-sm-warn"
                   : "text-sm-error";
             return (
               <div
-                key={core.core}
+                key={idx}
                 className="bg-sm-bg border border-[#2d3a4f] rounded p-2 text-center"
               >
                 <div className="text-[10px] text-sm-text-dim">
-                  Core {core.core}
+                  Core {idx}
                 </div>
                 <div className={`font-mono text-sm font-semibold ${textColor}`}>
-                  {formatPercent(core.percent)}
+                  {formatPercent(percent)}
                 </div>
                 <div className="mt-1 h-1 bg-[#2d3a4f] rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${color}`}
-                    style={{ width: `${Math.min(core.percent, 100)}%` }}
+                    style={{ width: `${Math.min(percent, 100)}%` }}
                   />
                 </div>
               </div>
@@ -156,11 +158,11 @@ export default function CpuPage() {
                 {label}
               </div>
               <div className="font-mono text-xl font-semibold text-sm-text mt-1">
-                {cpuData.load_avg[i]?.toFixed(2) ?? "--"}
+                {current.load_avg?.[i]?.toFixed(2) ?? "--"}
               </div>
               <div className="text-[10px] text-sm-text-dim mt-0.5">
-                {cpuData.cpu_cores > 0
-                  ? `${((cpuData.load_avg[i] / cpuData.cpu_cores) * 100).toFixed(0)}% of capacity`
+                {logicalCores > 0 && current.load_avg?.[i] != null
+                  ? `${((current.load_avg[i] / logicalCores) * 100).toFixed(0)}% of capacity`
                   : ""}
               </div>
             </div>

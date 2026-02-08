@@ -3,7 +3,7 @@
 import { useServerStore } from "@/stores/serverStore";
 import { useServerMemory, useServers } from "@/hooks/useMetrics";
 import TimeSeriesChart from "@/components/charts/TimeSeriesChart";
-import { formatBytes, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 
 export default function MemoryPage() {
   const { selectedServer } = useServerStore();
@@ -39,17 +39,21 @@ export default function MemoryPage() {
     );
   }
 
-  const memPercent = memData.percent;
-  const swapPercent =
-    memData.swap_total > 0
-      ? (memData.swap_used / memData.swap_total) * 100
-      : 0;
+  const mem = memData.current;
+  const memPercent = mem.percent;
+  const swapPercent = mem.swap_percent ?? 0;
+
+  // Convert history to chart format
+  const historyData = memData.history.map((h) => ({
+    timestamp: h.timestamp,
+    value: h.percent,
+  }));
 
   return (
     <div className="space-y-4">
       {/* Memory time series */}
       <TimeSeriesChart
-        data={memData.usage_history}
+        data={historyData}
         title="Memory Usage Over Time"
         color="#8b5cf6"
         height={250}
@@ -89,17 +93,17 @@ export default function MemoryPage() {
           <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
             <div className="text-sm-text-dim">Total</div>
             <div className="font-mono text-sm-text text-right">
-              {formatBytes(memData.total)}
+              {mem.total_gb.toFixed(1)} GB
             </div>
 
             <div className="text-sm-text-dim">Used</div>
             <div className="font-mono text-sm-text text-right">
-              {formatBytes(memData.used)}
+              {mem.used_gb.toFixed(1)} GB
             </div>
 
             <div className="text-sm-text-dim">Available</div>
             <div className="font-mono text-sm-ok text-right">
-              {formatBytes(memData.available)}
+              {mem.available_gb.toFixed(1)} GB
             </div>
           </div>
         </div>
@@ -135,17 +139,17 @@ export default function MemoryPage() {
           <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
             <div className="text-sm-text-dim">Total</div>
             <div className="font-mono text-sm-text text-right">
-              {formatBytes(memData.swap_total)}
+              {mem.swap_total_gb.toFixed(1)} GB
             </div>
 
             <div className="text-sm-text-dim">Used</div>
             <div className="font-mono text-sm-text text-right">
-              {formatBytes(memData.swap_used)}
+              {mem.swap_used_gb.toFixed(1)} GB
             </div>
 
             <div className="text-sm-text-dim">Free</div>
             <div className="font-mono text-sm-ok text-right">
-              {formatBytes(memData.swap_total - memData.swap_used)}
+              {(mem.swap_total_gb - mem.swap_used_gb).toFixed(1)} GB
             </div>
           </div>
         </div>
@@ -160,9 +164,9 @@ export default function MemoryPage() {
           <div
             className="bg-sm-error transition-all flex items-center justify-center"
             style={{
-              width: `${(memData.used / memData.total) * 100}%`,
+              width: `${mem.total_gb > 0 ? (mem.used_gb / mem.total_gb) * 100 : 0}%`,
             }}
-            title={`Used: ${formatBytes(memData.used)}`}
+            title={`Used: ${mem.used_gb.toFixed(1)} GB`}
           >
             <span className="text-[9px] text-white font-mono truncate px-1">
               Used
@@ -171,9 +175,9 @@ export default function MemoryPage() {
           <div
             className="bg-sm-ok transition-all flex items-center justify-center"
             style={{
-              width: `${(memData.available / memData.total) * 100}%`,
+              width: `${mem.total_gb > 0 ? (mem.available_gb / mem.total_gb) * 100 : 0}%`,
             }}
-            title={`Available: ${formatBytes(memData.available)}`}
+            title={`Available: ${mem.available_gb.toFixed(1)} GB`}
           >
             <span className="text-[9px] text-white font-mono truncate px-1">
               Avail
@@ -184,13 +188,13 @@ export default function MemoryPage() {
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-sm-error" />
             <span className="text-sm-text-dim">
-              Used ({formatBytes(memData.used)})
+              Used ({mem.used_gb.toFixed(1)} GB)
             </span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-sm-ok" />
             <span className="text-sm-text-dim">
-              Available ({formatBytes(memData.available)})
+              Available ({mem.available_gb.toFixed(1)} GB)
             </span>
           </div>
         </div>

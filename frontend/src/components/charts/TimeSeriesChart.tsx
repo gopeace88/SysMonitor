@@ -20,7 +20,7 @@ echarts.use([
 ]);
 
 interface TimeSeriesDataPoint {
-  timestamp: string;
+  timestamp: number | string;
   value: number;
 }
 
@@ -40,7 +40,11 @@ export default function TimeSeriesChart({
   yAxisFormat,
 }: TimeSeriesChartProps) {
   const option = useMemo(() => {
-    const timestamps = data.map((d) => d.timestamp);
+    const timestamps = data.map((d) => {
+      const ts = typeof d.timestamp === "number" ? d.timestamp * 1000 : d.timestamp;
+      const date = new Date(ts);
+      return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+    });
     const values = data.map((d) => d.value);
 
     return {
@@ -84,10 +88,6 @@ export default function TimeSeriesChart({
           color: "#94a3b8",
           fontSize: 10,
           fontFamily: "JetBrains Mono, monospace",
-          formatter: (val: string) => {
-            const d = new Date(val);
-            return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-          },
         },
         axisLine: { lineStyle: { color: "#2d3a4f" } },
         splitLine: { show: false },
