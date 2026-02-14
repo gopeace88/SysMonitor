@@ -1,0 +1,200 @@
+# ports.yml - Central port registry for all projects and services
+# Last updated: 2026-02-14
+
+ranges:
+  system: "1-1023"
+  infrastructure: "3000-3499"
+  dev: "5000-5999"
+  database: "5400-5499"
+  cache: "6300-6399"
+  backend: "8000-8999"
+  monitoring: "9000-9199"
+
+services:
+  # ── System services (1-1023) ──────────────────────────────────────
+  - name: ssh
+    port: 22
+    project: system
+    category: system
+
+  - name: dns-systemd-resolved
+    port: 53
+    project: system
+    category: system
+
+  - name: samba-netbios
+    port: 139
+    project: system
+    category: system
+
+  - name: samba-smb
+    port: 445
+    project: system
+    category: system
+
+  - name: cups-printing
+    port: 631
+    project: system
+    category: system
+
+  # ── Infrastructure (3000-3499) ────────────────────────────────────
+  - name: kb-chatbot-dashboard
+    port: 3000
+    project: kb-chatbot
+    category: infrastructure
+
+  - name: chinasearch-frontend
+    port: 3003
+    project: ChinaSearch
+    category: infrastructure
+
+  - name: chinasearch-gateway
+    port: 3004
+    project: ChinaSearch
+    category: infrastructure
+
+  - name: grafana
+    port: 3300
+    project: SysMonitor/monitoring
+    category: infrastructure
+
+  - name: openclaw-gateway-api
+    port: 3334
+    project: openclaw
+    category: infrastructure
+
+  - name: xrdp-sesman
+    port: 3350
+    project: system
+    category: infrastructure
+
+  - name: xrdp
+    port: 3389
+    project: system
+    category: infrastructure
+
+  - name: sysmonitor-frontend
+    port: 3400
+    project: SysMonitor
+    category: infrastructure
+
+  - name: claude-max-api-proxy
+    port: 3456
+    project: claude-max-api-proxy
+    category: infrastructure
+
+  - name: kb-chatbot-server
+    port: 3457
+    project: kb-chatbot
+    category: infrastructure
+
+  # ── Dev (4000-5999) ───────────────────────────────────────────────
+  - name: claude-observability-server
+    port: 4000
+    project: claude-observability
+    category: dev
+
+  - name: claude-observability-client
+    port: 5173
+    project: claude-observability
+    category: dev
+
+  # ── Database (5400-5499) ──────────────────────────────────────────
+  - name: c24-postgres
+    port: 5433
+    project: 00.caffe24
+    category: database
+
+  # ── Cache (6300-6399) ─────────────────────────────────────────────
+  - name: c24-redis
+    port: 6379
+    project: 00.caffe24/c24-assistant
+    category: cache
+
+  - name: c24-redis-insight
+    port: 6380
+    project: 00.caffe24
+    category: cache
+
+  # ── Backend (8000-8999) ───────────────────────────────────────────
+  - name: sysmonitor-backend
+    port: 8400
+    project: SysMonitor
+    category: backend
+
+  # ── Monitoring (9000-9199) ────────────────────────────────────────
+  - name: portainer-http
+    port: 9000
+    project: portainer
+    category: monitoring
+
+  - name: prometheus
+    port: 9090
+    project: SysMonitor/monitoring
+    category: monitoring
+
+  - name: node-exporter
+    port: 9100
+    project: SysMonitor/monitoring
+    category: monitoring
+
+  # ── Other services ────────────────────────────────────────────────
+  - name: mosquitto-mqtt
+    port: 1883
+    project: system
+    category: system
+
+  - name: cloudflared-metrics
+    port: 2222
+    project: cloudflared
+    category: infrastructure
+
+  - name: portainer-https
+    port: 9443
+    project: portainer
+    category: monitoring
+
+  - name: whisper-server
+    port: 9876
+    project: whisper-server
+    category: backend
+
+  - name: webmin-http
+    port: 10000
+    project: system
+    category: system
+
+  - name: china-search-webhook
+    port: 18800
+    project: ChinaSearch
+    category: backend
+
+  - name: openclaw-gateway-internal-1
+    port: 18789
+    project: openclaw
+    category: backend
+
+  - name: openclaw-gateway-internal-2
+    port: 18792
+    project: openclaw
+    category: backend
+
+  - name: webmin-alt
+    port: 20000
+    project: system
+    category: system
+
+  - name: cloudflared-tunnel-1
+    port: 20241
+    project: cloudflared
+    category: infrastructure
+
+  - name: cloudflared-tunnel-2
+    port: 20242
+    project: cloudflared
+    category: infrastructure
+
+  - name: cloudflared-tunnel-3
+    port: 20243
+    project: cloudflared
+    category: infrastructure
