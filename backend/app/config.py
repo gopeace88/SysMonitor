@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     claude_data_dir: Path = Path.home() / ".claude"
     projects_dir: Path = Path("/home/nvme1/jhkim/00.Projects")
+    host_etc_dir: Path = Path("/etc")
 
     collect_interval: int = 300  # 5 minutes for Cloudflare caching
 

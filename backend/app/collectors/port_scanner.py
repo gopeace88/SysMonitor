@@ -18,6 +18,7 @@ class PortScanner:
     def __init__(self):
         self.projects_dir: Path = settings.projects_dir
         self.registry_path: Path = self.projects_dir / "SysMonitor" / "ports.yml"
+        self.etc_dir: Path = settings.host_etc_dir
 
     # ── Registry ─────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ class PortScanner:
         ports: dict[int, dict] = {}
 
         # SSH
-        sshd_conf = Path("/etc/ssh/sshd_config")
+        sshd_conf = self.etc_dir / "ssh" / "sshd_config"
         if sshd_conf.exists():
             try:
                 for line in sshd_conf.read_text().splitlines():
@@ -160,13 +161,14 @@ class PortScanner:
                 logger.debug(f"Failed to parse sshd_config: {e}")
 
         # Samba - hardcoded 139/445
-        smb_conf = Path("/etc/samba/smb.conf")
+        smb_conf = self.etc_dir / "samba" / "smb.conf"
         if smb_conf.exists():
             ports[139] = {"source": "system-config", "service": "samba", "file": str(smb_conf)}
             ports[445] = {"source": "system-config", "service": "samba", "file": str(smb_conf)}
 
         # Mosquitto
-        for conf_path in Path("/etc/mosquitto").glob("*.conf") if Path("/etc/mosquitto").exists() else []:
+        mosquitto_dir = self.etc_dir / "mosquitto"
+        for conf_path in mosquitto_dir.glob("*.conf") if mosquitto_dir.exists() else []:
             try:
                 for line in conf_path.read_text().splitlines():
                     line = line.strip()
@@ -183,7 +185,7 @@ class PortScanner:
                 logger.debug(f"Failed to parse {conf_path}: {e}")
 
         # Cloudflared systemd services
-        systemd_dir = Path("/etc/systemd/system")
+        systemd_dir = self.etc_dir / "systemd" / "system"
         if systemd_dir.exists():
             for svc_file in systemd_dir.glob("cloudflared*.service"):
                 try:
@@ -359,7 +361,7 @@ class PortScanner:
         """Return ports.yml content."""
         return self._load_registry()
 
-    def get_ranges(self) -> list[dict[str, Any]]:
+    def get_ranges(self) -> dict[str, Any]:
         """Return category ranges with usage stats."""
         registry_data = self._load_registry()
         ranges_raw = registry_data.get("ranges", {})
@@ -380,12 +382,12 @@ class PortScanner:
 
             results.append({
                 "category": category,
-                "range": range_str,
                 "start": lo,
                 "end": hi,
+                "total_slots": hi - lo + 1,
                 "registered": registered_count,
                 "active": active_count,
                 "ports": sorted(port_list),
             })
 
-        return results
+        return {"ranges": results}

@@ -1,21 +1,26 @@
 services:
   backend:
     build: ./backend
-    ports:
-      - "8400:8000"
+    network_mode: host
+    pid: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
     volumes:
       - ./data:/app/data
-      - ${HOME}/.ssh/sysmonitor_nas:/app/.ssh/sysmonitor_nas:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${HOME}/.claude:/claude-data:ro
+      - /home/nvme1/jhkim/00.Projects:/projects:ro
+      - /etc:/host-etc:ro
     env_file: .env
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://192.192.192.169:8400
     ports:
       - "3400:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8400
     depends_on:
       - backend
     restart: unless-stopped
