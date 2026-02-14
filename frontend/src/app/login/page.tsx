@@ -20,7 +20,7 @@ export default function LoginPage() {
     try {
       const success = await login(username, password);
       if (success) {
-        router.push("/dashboard");
+        router.push("/cloudflare");
       } else {
         setError("Invalid username or password");
       }
@@ -40,7 +40,7 @@ export default function LoginPage() {
             SysMonitor
           </h1>
           <p className="text-xs text-sm-text-dim mt-1">
-            System Monitoring Dashboard
+            Cloudflare & Claude Dashboard
           </p>
         </div>
 
@@ -104,7 +104,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-[10px] text-sm-text-dim mt-4">
-          SysMonitor v1.0 &middot; Secure Connection
+          SysMonitor v2.0 &middot; Secure Connection
         </p>
       </div>
     </div>
