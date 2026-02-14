@@ -11,18 +11,16 @@ class Settings(BaseSettings):
     admin_password: str = "admin"
     jwt_expiry_hours: int = 24
 
-    nas_host: str = "192.192.192.145"
-    nas_ssh_user: str = "jhkim"
-    nas_ssh_key_path: str = "~/.ssh/sysmonitor_nas"
-    nas_prometheus_port: int = 9090
-
     cf_api_email: str = ""
     cf_api_key: str = ""
     cf_account_id: str = ""
     cf_zone_purions: str = ""
     cf_zone_rtk: str = ""
 
-    collect_interval: int = 60
+    claude_data_dir: Path = Path.home() / ".claude"
+    projects_dir: Path = Path("/home/nvme1/jhkim/00.Projects")
+
+    collect_interval: int = 300  # 5 minutes for Cloudflare caching
 
     data_dir: Path = Path("data")
 
