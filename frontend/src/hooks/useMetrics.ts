@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { apiGet } from "@/lib/api";
 
-const REFRESH_INTERVAL = 60000; // 60 seconds
+const REFRESH_INTERVAL = 60000;
 
 function useFetch<T>(path: string | null) {
   return useSWR<T>(
@@ -17,233 +17,207 @@ function useFetch<T>(path: string | null) {
   );
 }
 
-// GET /api/v1/servers
-export interface Server {
+// --- Cloudflare Types ---
+
+export interface TunnelIngress {
+  hostname: string;
+  service: string;
+}
+
+export interface Tunnel {
   id: string;
   name: string;
-  ip: string;
-  os: string;
-  status: string; // "up" | "down"
-  cpu_percent: number;
-  mem_percent: number;
-  uptime_seconds: number;
-}
-
-// GET /api/v1/servers/{id}/overview
-export interface ServerOverview {
-  id: string;
-  name: string;
-  ip: string;
-  os: string;
-  metrics: {
-    cpu: {
-      usage_percent: number;
-      per_core: number[];
-      load_avg: number[];
-      count: { physical: number; logical: number };
-    };
-    memory: {
-      total_gb: number;
-      used_gb: number;
-      available_gb: number;
-      percent: number;
-      swap_total_gb: number;
-      swap_used_gb: number;
-      swap_percent: number;
-    };
-    disks: Array<{
-      device: string;
-      mountpoint: string;
-      fstype: string;
-      total_gb: number;
-      used_gb: number;
-      free_gb: number;
-      percent: number;
-    }>;
-    network: {
-      interfaces: Array<{
-        name: string;
-        is_up: boolean;
-        speed_mbps: number;
-        rx_bytes: number;
-        tx_bytes: number;
-        rx_bytes_sec: number;
-        tx_bytes_sec: number;
-      }>;
-    };
-    docker: Array<{
-      id: string;
-      name: string;
-      image: string;
-      status: string;
-      state: string;
-      created: string;
-      ports: string;
-    }>;
-    uptime_seconds: number;
-    process_count: {
-      total: number;
-      running: number;
-      sleeping: number;
-      zombie: number;
-    };
-    top_processes: Array<{
-      pid: number;
-      name: string;
-      cpu_percent: number;
-      memory_percent: number;
-    }>;
-    timestamp: number;
-  };
-}
-
-// GET /api/v1/servers/{id}/cpu
-export interface CpuData {
-  current: {
-    usage_percent: number;
-    per_core: number[];
-    load_avg: number[];
-    count: { physical: number; logical: number };
-  };
-  history: Array<{ timestamp: number; usage_percent: number }>;
-}
-
-// GET /api/v1/servers/{id}/memory
-export interface MemoryData {
-  current: {
-    total_gb: number;
-    used_gb: number;
-    available_gb: number;
-    percent: number;
-    swap_total_gb: number;
-    swap_used_gb: number;
-    swap_percent: number;
-  };
-  history: Array<{ timestamp: number; percent: number }>;
-}
-
-// GET /api/v1/servers/{id}/disk
-export interface DiskInfo {
-  device: string;
-  mountpoint: string;
-  fstype: string;
-  total_gb: number;
-  used_gb: number;
-  free_gb: number;
-  percent: number;
-}
-
-export interface DiskData {
-  disks: DiskInfo[];
-}
-
-// GET /api/v1/servers/{id}/network
-export interface NetworkInterface {
-  name: string;
-  is_up: boolean;
-  speed_mbps: number;
-  rx_bytes: number;
-  tx_bytes: number;
-  rx_bytes_sec: number;
-  tx_bytes_sec: number;
-  rx_packets: number;
-  tx_packets: number;
-  errors_in: number;
-  errors_out: number;
-  drops_in: number;
-  drops_out: number;
-}
-
-export interface NetworkData {
-  current: {
-    interfaces: NetworkInterface[];
-  };
-  history: Array<{
-    timestamp: number;
-    interfaces: NetworkInterface[];
-  }>;
-}
-
-// GET /api/v1/servers/{id}/docker
-export interface DockerContainer {
-  id: string;
-  name: string;
-  image: string;
   status: string;
-  state: string;
-  ports: string;
-  created: string;
+  created_at: string;
+  connections: number;
+  ingress: TunnelIngress[];
 }
 
-export interface DockerData {
-  containers: DockerContainer[];
+export interface DnsRecord {
+  type: string;
+  name: string;
+  content: string;
+  proxied: boolean;
 }
 
-// GET /api/v1/servers/{id}/processes
-export interface ProcessData {
-  count: {
-    total: number;
-    running: number;
-    sleeping: number;
-    zombie: number;
-  };
-  top: Array<{
-    pid: number;
-    name: string;
-    cpu_percent: number;
-    memory_percent: number;
+export interface WarpDevice {
+  name: string;
+  type: string;
+  version: string;
+  ip: string;
+  last_seen: string | null;
+}
+
+// --- Claude Types ---
+
+export interface ClaudeSummary {
+  total_sessions: number;
+  total_messages: number;
+  model_count: number;
+  total_cost_usd: number;
+  first_session_date: string | null;
+  last_computed_date: string | null;
+  longest_session: {
+    sessionId: string;
+    duration: number;
+    messageCount: number;
+    timestamp: string;
+  } | null;
+}
+
+export interface DailyActivity {
+  date: string;
+  messageCount: number;
+  sessionCount: number;
+  toolCallCount: number;
+}
+
+export interface ModelUsage {
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_create_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+}
+
+export interface DailyModelTokens {
+  date: string;
+  tokensByModel: Record<string, number>;
+}
+
+export interface CostBreakdown {
+  total_cost_usd: number;
+  models: Array<{
+    model: string;
+    input_cost: number;
+    output_cost: number;
+    cache_read_cost: number;
+    cache_create_cost: number;
+    total_cost: number;
   }>;
 }
 
-// GET /api/v1/alerts
-export interface Alert {
-  id: number;
-  server_id: string;
-  metric: string;
-  severity: string; // "warning" | "critical"
-  message: string;
-  value: number;
-  threshold: number;
-  timestamp: string;
-  acknowledged: boolean;
+export interface RateLimitWindow {
+  used_pct: number;
+  remaining_pct: number;
+  reset_at: string | null;
 }
 
-export function useServers() {
-  return useFetch<Server[]>("/api/v1/servers");
+export interface ClaudeRateLimits {
+  available: boolean;
+  plan?: string;
+  five_hour?: RateLimitWindow;
+  seven_day?: RateLimitWindow;
+  cached_at?: number;
 }
 
-export function useServerOverview(id: string | null) {
-  return useFetch<ServerOverview>(id ? `/api/v1/servers/${id}/overview` : null);
+export interface ClaudeSession {
+  session_id: string;
+  project: string;
+  message_count: number;
+  first_message: number;
+  last_message: number;
+  first_display: string;
 }
 
-export function useServerCpu(id: string | null) {
-  return useFetch<CpuData>(id ? `/api/v1/servers/${id}/cpu` : null);
+// --- Cloudflare Hooks ---
+
+export function useTunnels() {
+  return useFetch<Tunnel[]>("/api/v1/cloudflare/tunnels");
 }
 
-export function useServerMemory(id: string | null) {
-  return useFetch<MemoryData>(id ? `/api/v1/servers/${id}/memory` : null);
+export function useDnsRecords(zone: string | null) {
+  return useFetch<DnsRecord[]>(zone ? `/api/v1/cloudflare/dns/${zone}` : null);
 }
 
-export function useServerDisk(id: string | null) {
-  return useFetch<DiskData>(id ? `/api/v1/servers/${id}/disk` : null);
+export function useWarpDevices() {
+  return useFetch<WarpDevice[]>("/api/v1/cloudflare/warp/devices");
 }
 
-export function useServerNetwork(id: string | null) {
-  return useFetch<NetworkData>(id ? `/api/v1/servers/${id}/network` : null);
+// --- Claude Hooks ---
+
+export function useClaudeSummary() {
+  return useFetch<ClaudeSummary>("/api/v1/claude/summary");
 }
 
-export function useServerDocker(id: string | null) {
-  return useFetch<DockerData>(id ? `/api/v1/servers/${id}/docker` : null);
+export function useClaudeDailyActivity() {
+  return useFetch<DailyActivity[]>("/api/v1/claude/usage/daily");
 }
 
-export function useServerProcesses(id: string | null) {
-  return useFetch<ProcessData>(id ? `/api/v1/servers/${id}/processes` : null);
+export function useClaudeModelUsage() {
+  return useFetch<ModelUsage[]>("/api/v1/claude/usage/models");
 }
 
-export function useAlerts() {
-  return useFetch<Alert[]>("/api/v1/alerts");
+export function useClaudeDailyModels() {
+  return useFetch<DailyModelTokens[]>("/api/v1/claude/usage/daily-models");
 }
 
-export function useActiveAlerts() {
-  return useFetch<Alert[]>("/api/v1/alerts/active");
+export function useClaudeCost() {
+  return useFetch<CostBreakdown>("/api/v1/claude/cost");
+}
+
+export function useClaudeSessions() {
+  return useFetch<ClaudeSession[]>("/api/v1/claude/sessions");
+}
+
+export function useClaudeHours() {
+  return useFetch<Record<string, number>>("/api/v1/claude/hours");
+}
+
+export function useClaudeRateLimits() {
+  return useFetch<ClaudeRateLimits>("/api/v1/claude/rate-limits");
+}
+
+// --- Port Types ---
+
+export interface PortEntry {
+  port: number;
+  status: "active" | "inactive" | "configured" | "unregistered" | "conflict";
+  sources: string[];
+  name: string;
+  project: string;
+  category: string;
+  process: string;
+  pid: number;
+  bind: string;
+}
+
+export interface PortStatus {
+  scanned_at: string;
+  summary: {
+    total: number;
+    registered: number;
+    active: number;
+    inactive: number;
+    configured: number;
+    unregistered: number;
+    conflict: number;
+  };
+  ports: PortEntry[];
+}
+
+export interface PortRange {
+  category: string;
+  start: number;
+  end: number;
+  total_slots: number;
+  registered: number;
+  active: number;
+  ports: number[];
+}
+
+export interface PortRanges {
+  ranges: PortRange[];
+}
+
+// --- Port Hooks ---
+
+export function usePortStatus() {
+  return useFetch<PortStatus>("/api/v1/ports/status");
+}
+
+export function usePortRanges() {
+  return useFetch<PortRanges>("/api/v1/ports/ranges");
 }

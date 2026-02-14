@@ -11,38 +11,30 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "\u{1F4CA}" },
-  { label: "Interfaces", href: "/interfaces", icon: "\u{1F310}" },
-  { label: "Hosts", href: "/hosts", icon: "\u{1F5A5}" },
-  { label: "Flows", href: "/flows", icon: "\u{1F500}" },
-  { label: "Alerts", href: "/alerts", icon: "\u{1F6A8}" },
+  { label: "Cloudflare", href: "/cloudflare", icon: "\u{2601}" },
   {
-    label: "System",
-    href: "/system",
-    icon: "\u{2699}",
+    label: "Claude",
+    href: "/claude",
+    icon: "\u{1F916}",
     children: [
-      { label: "Overview", href: "/system", icon: "\u{1F4CB}" },
-      { label: "CPU", href: "/system/cpu", icon: "\u{1F4BB}" },
-      { label: "Memory", href: "/system/memory", icon: "\u{1F9E0}" },
-      { label: "Disks", href: "/system/disks", icon: "\u{1F4BE}" },
-      { label: "Docker", href: "/system/docker", icon: "\u{1F433}" },
+      { label: "Overview", href: "/claude", icon: "\u{1F4CB}" },
+      { label: "Usage", href: "/claude/usage", icon: "\u{1F4CA}" },
+      { label: "Cost", href: "/claude/cost", icon: "\u{1F4B0}" },
+      { label: "Sessions", href: "/claude/sessions", icon: "\u{1F4DD}" },
     ],
   },
-  { label: "Settings", href: "/settings", icon: "\u{1F527}" },
+  { label: "Ports", href: "/ports", icon: "\u{1F50C}" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === "/system") {
-      return pathname === "/system";
-    }
+    if (href === "/claude") return pathname === "/claude";
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const isSystemExpanded =
-    pathname.startsWith("/system");
+  const isClaudeExpanded = pathname.startsWith("/claude");
 
   return (
     <aside className="fixed top-12 left-0 w-56 h-[calc(100vh-48px)] bg-[#16213e] border-r border-[#2d3a4f] overflow-y-auto z-40">
@@ -61,8 +53,7 @@ export default function Sidebar() {
               <span>{item.label}</span>
             </Link>
 
-            {/* Sub-menu items */}
-            {item.children && isSystemExpanded && (
+            {item.children && isClaudeExpanded && (
               <div className="ml-4">
                 {item.children.map((child) => (
                   <Link
@@ -84,11 +75,10 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom info */}
       <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-[#2d3a4f]">
         <div className="text-[10px] text-sm-text-dim">
-          <div>SysMonitor v1.0</div>
-          <div className="mt-0.5">Refresh: 60s</div>
+          <div>SysMonitor v2.0</div>
+          <div className="mt-0.5">Cloudflare & Claude & Ports</div>
         </div>
       </div>
     </aside>
