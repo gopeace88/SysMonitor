@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -171,18 +172,36 @@ class ClaudeUsageCollector:
         try:
             data = json.loads(cache_path.read_text())
             info = data.get("data", {})
+            now = datetime.now(timezone.utc)
+
+            five_pct = info.get("fiveHour", 0)
+            five_reset = info.get("fiveHourResetAt")
+            if five_reset:
+                reset_dt = datetime.fromisoformat(five_reset.replace("Z", "+00:00"))
+                if now > reset_dt:
+                    five_pct = 0
+                    five_reset = None
+
+            seven_pct = info.get("sevenDay", 0)
+            seven_reset = info.get("sevenDayResetAt")
+            if seven_reset:
+                reset_dt = datetime.fromisoformat(seven_reset.replace("Z", "+00:00"))
+                if now > reset_dt:
+                    seven_pct = 0
+                    seven_reset = None
+
             return {
                 "available": True,
                 "plan": info.get("planName", "Unknown"),
                 "five_hour": {
-                    "used_pct": info.get("fiveHour", 0),
-                    "remaining_pct": 100 - info.get("fiveHour", 0),
-                    "reset_at": info.get("fiveHourResetAt"),
+                    "used_pct": five_pct,
+                    "remaining_pct": 100 - five_pct,
+                    "reset_at": five_reset,
                 },
                 "seven_day": {
-                    "used_pct": info.get("sevenDay", 0),
-                    "remaining_pct": 100 - info.get("sevenDay", 0),
-                    "reset_at": info.get("sevenDayResetAt"),
+                    "used_pct": seven_pct,
+                    "remaining_pct": 100 - seven_pct,
+                    "reset_at": seven_reset,
                 },
                 "cached_at": data.get("timestamp"),
             }
