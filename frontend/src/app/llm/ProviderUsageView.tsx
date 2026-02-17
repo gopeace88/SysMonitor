@@ -45,7 +45,11 @@ export default function ProviderUsageView({ provider }: { provider: "gpt" | "gem
             })}
           </div>
         ) : (
-          <div className="text-xs text-sm-text-dim">현재 rate-limit 데이터를 불러오지 못했습니다. 잠시 후 새로고침해주세요.</div>
+          <div className="text-xs text-sm-text-dim">
+            {rateLimits?.available
+              ? "현재 활성 세션이 없어 rate-limit 윈도우가 없습니다."
+              : "현재 rate-limit 데이터를 불러오지 못했습니다. 잠시 후 새로고침해주세요."}
+          </div>
         )}
       </div>
 
