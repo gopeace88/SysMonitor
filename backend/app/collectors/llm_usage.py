@@ -35,7 +35,7 @@ class LlmUsageCollector:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=12,
+                timeout=20,
                 check=False,
                 env={**os.environ, "OPENCLAW_STATE_DIR": str(settings.openclaw_state_dir)},
             )
