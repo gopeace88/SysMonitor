@@ -9,9 +9,12 @@ services:
     volumes:
       - ./data:/app/data
       - ${HOME}/.claude:/claude-data:ro
+      - ${HOME}/.openclaw:/openclaw-data:ro
       - /home/nvme1/jhkim/00.Projects:/projects:ro
       - /etc:/host-etc:ro
     env_file: .env
+    environment:
+      - OPENCLAW_SESSIONS_PATH=/openclaw-data/agents/main/sessions/sessions.json
     restart: unless-stopped
 
   frontend:
