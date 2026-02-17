@@ -146,7 +146,10 @@ export interface LlmModelUsage {
 
 export interface LlmCostBreakdown {
   provider: "gpt" | "gemini";
-  total_cost_usd: number;
+  available?: boolean;
+  source?: string;
+  reason?: string;
+  total_cost_usd: number | null;
   models: Array<{
     model: string;
     input_cost: number;

@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     openclaw_bin: str = "openclaw"
     openclaw_node_bin: str = ""
     openclaw_state_dir: Path = Path.home() / ".openclaw"
+    llm_local_fallback_enabled: bool = False
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

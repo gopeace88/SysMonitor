@@ -50,9 +50,9 @@ export default function ProviderUsageView({ provider }: { provider: "gpt" | "gem
       </div>
 
       <div className="bg-sm-surface border border-[#2d3a4f] rounded-lg p-6 text-center">
-        <div className="text-xs text-sm-text-dim mb-1">Estimated Total Cost</div>
-        <div className="text-3xl font-bold font-mono text-sm-warn">{formatUSD(cost?.total_cost_usd ?? 0)}</div>
-        <div className="text-[10px] text-sm-text-dim mt-1">Estimated from model token usage</div>
+        <div className="text-xs text-sm-text-dim mb-1">Monthly Cost</div>
+        <div className="text-3xl font-bold font-mono text-sm-warn">{cost?.total_cost_usd == null ? "N/A" : formatUSD(cost.total_cost_usd)}</div>
+        <div className="text-[10px] text-sm-text-dim mt-1">{cost?.reason ?? "Provider source"}</div>
       </div>
 
       <DataTable
