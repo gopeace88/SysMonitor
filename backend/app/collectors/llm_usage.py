@@ -1,5 +1,6 @@
 import json
 import logging
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,23 @@ DEFAULT_ESTIMATE = {"input": 1.0, "output": 4.0}
 
 
 class LlmUsageCollector:
+    def _read_provider_usage(self) -> dict[str, Any]:
+        try:
+            proc = subprocess.run(
+                ["openclaw", "status", "--usage", "--json"],
+                capture_output=True,
+                text=True,
+                timeout=12,
+                check=False,
+            )
+            if proc.returncode != 0 or not proc.stdout:
+                return {}
+            data = json.loads(proc.stdout)
+            return data.get("usage", {}) if isinstance(data, dict) else {}
+        except Exception as e:
+            logger.error(f"Failed to read provider usage from openclaw status: {e}")
+            return {}
+
     def __init__(self):
         self.sessions_path: Path = settings.openclaw_sessions_path
 
@@ -121,6 +139,69 @@ class LlmUsageCollector:
                 buckets[model]["last_updated_at"] = max(prev or 0, updated_at)
 
         return sorted(buckets.values(), key=lambda x: x["total_tokens"], reverse=True)
+
+    def get_rate_limits(self, provider: str) -> dict[str, Any]:
+        usage = self._read_provider_usage()
+        providers = usage.get("providers", []) if isinstance(usage, dict) else []
+
+        if provider == "gpt":
+            p = next((x for x in providers if str(x.get("provider")) == "openai-codex"), None)
+            if not p:
+                return {"available": False}
+            windows = p.get("windows", [])
+            return {
+                "available": True,
+                "source_provider": p.get("provider"),
+                "plan": p.get("plan"),
+                "windows": [
+                    {
+                        "label": w.get("label"),
+                        "used_pct": w.get("usedPercent", 0),
+                        "remaining_pct": max(0, 100 - int(w.get("usedPercent", 0) or 0)),
+                        "reset_at": w.get("resetAt"),
+                    }
+                    for w in windows
+                ],
+            }
+
+        # gemini: accept native gemini provider or antigravity gemini-labelled windows
+        gemini_provider = next((x for x in providers if "gemini" in str(x.get("provider", "")).lower()), None)
+        if gemini_provider:
+            windows = gemini_provider.get("windows", [])
+            return {
+                "available": True,
+                "source_provider": gemini_provider.get("provider"),
+                "plan": gemini_provider.get("plan"),
+                "windows": [
+                    {
+                        "label": w.get("label"),
+                        "used_pct": w.get("usedPercent", 0),
+                        "remaining_pct": max(0, 100 - int(w.get("usedPercent", 0) or 0)),
+                        "reset_at": w.get("resetAt"),
+                    }
+                    for w in windows
+                ],
+            }
+
+        antigravity = next((x for x in providers if str(x.get("provider")) == "google-antigravity"), None)
+        if antigravity:
+            windows = [w for w in antigravity.get("windows", []) if "gemini" in str(w.get("label", "")).lower()]
+            return {
+                "available": True,
+                "source_provider": antigravity.get("provider"),
+                "plan": antigravity.get("plan"),
+                "windows": [
+                    {
+                        "label": w.get("label"),
+                        "used_pct": w.get("usedPercent", 0),
+                        "remaining_pct": max(0, 100 - int(w.get("usedPercent", 0) or 0)),
+                        "reset_at": w.get("resetAt"),
+                    }
+                    for w in windows
+                ],
+            }
+
+        return {"available": False}
 
     def get_cost(self, provider: str) -> dict[str, Any]:
         models = self.get_models(provider)

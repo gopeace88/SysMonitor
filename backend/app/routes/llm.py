@@ -29,3 +29,9 @@ async def models(provider: str, _: str = Depends(verify_token)):
 async def cost(provider: str, _: str = Depends(verify_token)):
     p = _validate_provider(provider)
     return collector.get_cost(p)
+
+
+@router.get("/rate-limits/{provider}")
+async def rate_limits(provider: str, _: str = Depends(verify_token)):
+    p = _validate_provider(provider)
+    return collector.get_rate_limits(p)

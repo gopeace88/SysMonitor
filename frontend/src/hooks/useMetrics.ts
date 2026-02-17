@@ -156,6 +156,20 @@ export interface LlmCostBreakdown {
   }>;
 }
 
+export interface LlmRateLimitWindow {
+  label: string;
+  used_pct: number;
+  remaining_pct: number;
+  reset_at: number | null;
+}
+
+export interface LlmRateLimits {
+  available: boolean;
+  source_provider?: string;
+  plan?: string;
+  windows?: LlmRateLimitWindow[];
+}
+
 // --- Cloudflare Hooks ---
 
 export function useTunnels() {
@@ -214,6 +228,10 @@ export function useLlmModels(provider: "gpt" | "gemini") {
 
 export function useLlmCost(provider: "gpt" | "gemini") {
   return useFetch<LlmCostBreakdown>(`/api/v1/llm/cost/${provider}`);
+}
+
+export function useLlmRateLimits(provider: "gpt" | "gemini") {
+  return useFetch<LlmRateLimits>(`/api/v1/llm/rate-limits/${provider}`);
 }
 
 // --- Port Types ---
