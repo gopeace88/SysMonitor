@@ -10,11 +10,15 @@ services:
       - ./data:/app/data
       - ${HOME}/.claude:/claude-data:ro
       - ${HOME}/.openclaw:/openclaw-data:ro
+      - ${HOME}/.nvm:/host-nvm:ro
       - /home/nvme1/jhkim/00.Projects:/projects:ro
       - /etc:/host-etc:ro
     env_file: .env
     environment:
       - OPENCLAW_SESSIONS_PATH=/openclaw-data/agents/main/sessions/sessions.json
+      - OPENCLAW_STATE_DIR=/openclaw-data
+      - OPENCLAW_BIN=/host-nvm/versions/node/v22.22.0/bin/openclaw
+      - OPENCLAW_NODE_BIN=/host-nvm/versions/node/v22.22.0/bin/node
     restart: unless-stopped
 
   frontend:

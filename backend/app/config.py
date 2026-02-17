@@ -25,6 +25,9 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path("data")
     openclaw_sessions_path: Path = Path.home() / ".openclaw" / "agents" / "main" / "sessions" / "sessions.json"
+    openclaw_bin: str = "openclaw"
+    openclaw_node_bin: str = ""
+    openclaw_state_dir: Path = Path.home() / ".openclaw"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

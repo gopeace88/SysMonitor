@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -26,12 +27,17 @@ DEFAULT_ESTIMATE = {"input": 1.0, "output": 4.0}
 class LlmUsageCollector:
     def _read_provider_usage(self) -> dict[str, Any]:
         try:
+            cmd = [settings.openclaw_bin, "status", "--usage", "--json"]
+            if settings.openclaw_node_bin:
+                cmd = [settings.openclaw_node_bin, settings.openclaw_bin, "status", "--usage", "--json"]
+
             proc = subprocess.run(
-                ["openclaw", "status", "--usage", "--json"],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=12,
                 check=False,
+                env={**os.environ, "OPENCLAW_STATE_DIR": str(settings.openclaw_state_dir)},
             )
             if proc.returncode != 0 or not proc.stdout:
                 return {}
