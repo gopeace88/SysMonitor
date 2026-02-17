@@ -6,6 +6,7 @@ from app.routes.auth import router as auth_router
 from app.routes.cloudflare import router as cf_router
 from app.routes.claude import router as claude_router
 from app.routes.ports import router as ports_router
+from app.routes.llm import router as llm_router
 from app.scheduler import start_scheduler
 
 
@@ -29,6 +30,7 @@ app.include_router(auth_router)
 app.include_router(cf_router)
 app.include_router(claude_router)
 app.include_router(ports_router)
+app.include_router(llm_router)
 
 
 @app.get("/api/v1/health")

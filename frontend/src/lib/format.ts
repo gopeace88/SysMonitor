@@ -61,6 +61,10 @@ export function formatTokens(count: number): string {
   return `${(count / 1_000_000_000).toFixed(2)}B`;
 }
 
+export function formatNumber(value: number): string {
+  return value.toLocaleString();
+}
+
 export function formatModelName(modelId: string): string {
   if (modelId.includes("opus-4-6")) return "Opus 4.6";
   if (modelId.includes("opus-4-5")) return "Opus 4.5";

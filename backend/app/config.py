@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     collect_interval: int = 300  # 5 minutes for Cloudflare caching
 
     data_dir: Path = Path("data")
+    openclaw_sessions_path: Path = Path.home() / ".openclaw" / "agents" / "main" / "sessions" / "sessions.json"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

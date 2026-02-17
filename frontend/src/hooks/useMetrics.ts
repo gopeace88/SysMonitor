@@ -122,6 +122,28 @@ export interface ClaudeSession {
   first_display: string;
 }
 
+export interface ProviderSummary {
+  session_count: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  last_updated_at: number | null;
+}
+
+export interface LlmSummary {
+  gpt: ProviderSummary;
+  gemini: ProviderSummary;
+}
+
+export interface LlmModelUsage {
+  model: string;
+  session_count: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  last_updated_at: number | null;
+}
+
 // --- Cloudflare Hooks ---
 
 export function useTunnels() {
@@ -168,6 +190,14 @@ export function useClaudeHours() {
 
 export function useClaudeRateLimits() {
   return useFetch<ClaudeRateLimits>("/api/v1/claude/rate-limits");
+}
+
+export function useLlmSummary() {
+  return useFetch<LlmSummary>("/api/v1/llm/summary");
+}
+
+export function useLlmModels(provider: "gpt" | "gemini") {
+  return useFetch<LlmModelUsage[]>(`/api/v1/llm/models/${provider}`);
 }
 
 // --- Port Types ---
