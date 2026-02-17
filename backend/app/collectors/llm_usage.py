@@ -333,7 +333,7 @@ class LlmUsageCollector:
             sid = sd["sessionId"]
             context_tokens = sd.get("contextTokens", 0)
             total_tokens = sd.get("totalTokens", 0)
-            pct_used = sd.get("percentUsed", 0)
+            pct_used = sd.get("percentUsed") or (round(total_tokens / context_tokens * 100) if context_tokens > 0 else 0)
 
             if context_tokens <= 0:
                 continue

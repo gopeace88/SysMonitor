@@ -23,16 +23,7 @@ const menuItems: MenuItem[] = [
       { label: "Sessions", href: "/claude/sessions", icon: "\u{1F4DD}" },
     ],
   },
-  {
-    label: "GPT & Gemini",
-    href: "/llm",
-    icon: "\u{2728}",
-    children: [
-      { label: "Overview", href: "/llm", icon: "\u{1F4CB}" },
-      { label: "GPT", href: "/llm/gpt", icon: "\u{1F9E0}" },
-      { label: "Gemini", href: "/llm/gemini", icon: "\u{1F31F}" },
-    ],
-  },
+  { label: "GPT", href: "/llm/gpt", icon: "\u{2728}" },
   { label: "Ports", href: "/ports", icon: "\u{1F50C}" },
 ];
 
