@@ -23,7 +23,16 @@ const menuItems: MenuItem[] = [
       { label: "Sessions", href: "/claude/sessions", icon: "\u{1F4DD}" },
     ],
   },
-  { label: "GPT & Gemini", href: "/llm", icon: "\u{2728}" },
+  {
+    label: "GPT & Gemini",
+    href: "/llm",
+    icon: "\u{2728}",
+    children: [
+      { label: "Overview", href: "/llm", icon: "\u{1F4CB}" },
+      { label: "GPT", href: "/llm/gpt", icon: "\u{1F9E0}" },
+      { label: "Gemini", href: "/llm/gemini", icon: "\u{1F31F}" },
+    ],
+  },
   { label: "Ports", href: "/ports", icon: "\u{1F50C}" },
 ];
 
@@ -35,7 +44,7 @@ export default function Sidebar() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const isClaudeExpanded = pathname.startsWith("/claude");
+  const isExpanded = (href: string) => pathname.startsWith(href);
 
   return (
     <aside className="fixed top-12 left-0 w-56 h-[calc(100vh-48px)] bg-[#16213e] border-r border-[#2d3a4f] overflow-y-auto z-40">
@@ -54,7 +63,7 @@ export default function Sidebar() {
               <span>{item.label}</span>
             </Link>
 
-            {item.children && isClaudeExpanded && (
+            {item.children && isExpanded(item.href) && (
               <div className="ml-4">
                 {item.children.map((child) => (
                   <Link
@@ -79,7 +88,7 @@ export default function Sidebar() {
       <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-[#2d3a4f]">
         <div className="text-[10px] text-sm-text-dim">
           <div>SysMonitor v2.0</div>
-          <div className="mt-0.5">Cloudflare & Claude & Ports</div>
+          <div className="mt-0.5">Cloudflare & Claude & GPT/Gemini & Ports</div>
         </div>
       </div>
     </aside>

@@ -144,6 +144,18 @@ export interface LlmModelUsage {
   last_updated_at: number | null;
 }
 
+export interface LlmCostBreakdown {
+  provider: "gpt" | "gemini";
+  total_cost_usd: number;
+  models: Array<{
+    model: string;
+    input_cost: number;
+    output_cost: number;
+    total_cost: number;
+    session_count: number;
+  }>;
+}
+
 // --- Cloudflare Hooks ---
 
 export function useTunnels() {
@@ -198,6 +210,10 @@ export function useLlmSummary() {
 
 export function useLlmModels(provider: "gpt" | "gemini") {
   return useFetch<LlmModelUsage[]>(`/api/v1/llm/models/${provider}`);
+}
+
+export function useLlmCost(provider: "gpt" | "gemini") {
+  return useFetch<LlmCostBreakdown>(`/api/v1/llm/cost/${provider}`);
 }
 
 // --- Port Types ---

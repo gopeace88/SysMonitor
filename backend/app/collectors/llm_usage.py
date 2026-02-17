@@ -8,6 +8,20 @@ from app.config import settings
 logger = logging.getLogger("sysmonitor.llm")
 
 
+# rough estimates per 1M tokens
+GPT_PRICING = {
+    "gpt-5": {"input": 5.0, "output": 15.0},
+    "gpt-4": {"input": 10.0, "output": 30.0},
+    "codex": {"input": 5.0, "output": 15.0},
+}
+GEMINI_PRICING = {
+    "gemini-2.5-pro": {"input": 3.5, "output": 10.5},
+    "gemini-2.5-flash": {"input": 0.3, "output": 2.5},
+    "gemini": {"input": 1.0, "output": 4.0},
+}
+DEFAULT_ESTIMATE = {"input": 1.0, "output": 4.0}
+
+
 class LlmUsageCollector:
     def __init__(self):
         self.sessions_path: Path = settings.openclaw_sessions_path
@@ -63,6 +77,14 @@ class LlmUsageCollector:
 
         return agg
 
+    def _pricing_for(self, provider: str, model: str) -> dict[str, float]:
+        m = model.lower()
+        price_map = GPT_PRICING if provider == "gpt" else GEMINI_PRICING
+        for key, pricing in price_map.items():
+            if key in m:
+                return pricing
+        return DEFAULT_ESTIMATE
+
     def get_models(self, provider: str) -> list[dict[str, Any]]:
         provider = provider.lower()
         sessions = self._read_sessions()
@@ -99,3 +121,28 @@ class LlmUsageCollector:
                 buckets[model]["last_updated_at"] = max(prev or 0, updated_at)
 
         return sorted(buckets.values(), key=lambda x: x["total_tokens"], reverse=True)
+
+    def get_cost(self, provider: str) -> dict[str, Any]:
+        models = self.get_models(provider)
+        rows = []
+        total_cost = 0.0
+
+        for m in models:
+            pricing = self._pricing_for(provider, str(m.get("model") or ""))
+            input_tokens = int(m.get("input_tokens") or 0)
+            output_tokens = int(m.get("output_tokens") or 0)
+            input_cost = (input_tokens / 1_000_000) * pricing["input"]
+            output_cost = (output_tokens / 1_000_000) * pricing["output"]
+            model_cost = input_cost + output_cost
+            total_cost += model_cost
+            rows.append(
+                {
+                    "model": m.get("model"),
+                    "input_cost": round(input_cost, 4),
+                    "output_cost": round(output_cost, 4),
+                    "total_cost": round(model_cost, 4),
+                    "session_count": m.get("session_count", 0),
+                }
+            )
+
+        return {"provider": provider, "total_cost_usd": round(total_cost, 2), "models": rows}

@@ -37,7 +37,7 @@ export default function TopBar() {
           v2.0
         </span>
         <span className="text-[10px] text-sm-text-dim">
-          Cloudflare & Claude Dashboard
+          Cloudflare & Claude & GPT/Gemini Dashboard
         </span>
       </div>
 
