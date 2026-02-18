@@ -20,6 +20,7 @@ PRICING = {
     "claude-opus-4-6": {"input": 15.0, "output": 75.0},
     "claude-sonnet-4-5-20250929": {"input": 3.0, "output": 15.0},
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
+    "claude-haiku-4-5-20251001": {"input": 0.8, "output": 4.0},
 }
 DEFAULT_PRICING = {"input": 3.0, "output": 15.0}
 CACHE_READ_DISCOUNT = 0.9   # 90% cheaper

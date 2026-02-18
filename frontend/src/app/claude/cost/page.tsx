@@ -9,7 +9,13 @@ export default function ClaudeCostPage() {
   const { data: costData } = useClaudeCost();
 
   const totalCost = costData?.total_cost_usd ?? 0;
-  const models = costData?.models ?? [];
+  const MODEL_ORDER = ["opus-4-6", "sonnet-4-6", "haiku-4-5", "opus-4-5", "sonnet-4-5"];
+  const sortModels = (a: string, b: string) => {
+    const ai = MODEL_ORDER.findIndex((p) => a.includes(p));
+    const bi = MODEL_ORDER.findIndex((p) => b.includes(p));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  };
+  const models = [...(costData?.models ?? [])].sort((a, b) => sortModels(a.model, b.model));
 
   const pieData = models.map((m) => ({
     name: formatModelName(m.model),
@@ -95,14 +101,18 @@ export default function ClaudeCostPage() {
       {/* Pricing Reference */}
       <div className="bg-sm-surface border border-[#2d3a4f] rounded-lg p-3">
         <h3 className="text-xs font-medium text-sm-text mb-2">Pricing Reference (per 1M tokens)</h3>
-        <div className="grid grid-cols-3 gap-2 text-[10px]">
+        <div className="grid grid-cols-4 gap-2 text-[10px]">
           <div className="text-sm-text-dim">
             <span className="text-sm-link font-medium">Opus 4.5/4.6</span>
             <br />Input: $15 / Output: $75
           </div>
           <div className="text-sm-text-dim">
-            <span className="text-sm-link font-medium">Sonnet 4.5</span>
+            <span className="text-sm-link font-medium">Sonnet 4.5/4.6</span>
             <br />Input: $3 / Output: $15
+          </div>
+          <div className="text-sm-text-dim">
+            <span className="text-sm-link font-medium">Haiku 4.5</span>
+            <br />Input: $0.8 / Output: $4
           </div>
           <div className="text-sm-text-dim">
             <span className="text-sm-link font-medium">Cache</span>
