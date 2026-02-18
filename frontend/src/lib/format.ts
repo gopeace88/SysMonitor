@@ -68,6 +68,7 @@ export function formatNumber(value: number): string {
 export function formatModelName(modelId: string): string {
   if (modelId.includes("opus-4-6")) return "Opus 4.6";
   if (modelId.includes("opus-4-5")) return "Opus 4.5";
+  if (modelId.includes("sonnet-4-6")) return "Sonnet 4.6";
   if (modelId.includes("sonnet-4-5")) return "Sonnet 4.5";
   if (modelId.includes("haiku-4-5")) return "Haiku 4.5";
   if (modelId.includes("opus")) return "Opus";

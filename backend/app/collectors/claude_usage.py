@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -8,11 +9,17 @@ from app.config import settings
 
 logger = logging.getLogger("sysmonitor.claude")
 
+_JSONL_CACHE: dict[str, Any] = {}       # model → cumulative tokens
+_JSONL_DAILY_CACHE: dict[str, Any] = {} # date → model → tokens
+_JSONL_CACHE_TIME: float = 0
+_JSONL_CACHE_TTL = 300  # 5 minutes
+
 # Anthropic pricing per 1M tokens
 PRICING = {
     "claude-opus-4-5-20251101": {"input": 15.0, "output": 75.0},
     "claude-opus-4-6": {"input": 15.0, "output": 75.0},
     "claude-sonnet-4-5-20250929": {"input": 3.0, "output": 15.0},
+    "claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
 }
 DEFAULT_PRICING = {"input": 3.0, "output": 15.0}
 CACHE_READ_DISCOUNT = 0.9   # 90% cheaper
@@ -47,12 +54,78 @@ class ClaudeUsageCollector:
             logger.error(f"Failed to read history.jsonl: {e}")
         return results
 
+    def _build_jsonl_cache(self) -> None:
+        """JSONL 파일 스캔 → 모델별/날짜별 집계 (5분 캐시)."""
+        global _JSONL_CACHE, _JSONL_DAILY_CACHE, _JSONL_CACHE_TIME
+        now = time.time()
+        if _JSONL_CACHE and (now - _JSONL_CACHE_TIME) < _JSONL_CACHE_TTL:
+            return
+
+        cumulative: dict[str, dict] = {}
+        daily: dict[str, dict] = {}  # date → {model → tokens}
+
+        projects_dir = self.data_dir / "projects"
+        if projects_dir.exists():
+            for jsonl_file in projects_dir.rglob("*.jsonl"):
+                try:
+                    for line in jsonl_file.read_text(errors="ignore").splitlines():
+                        if not line.strip():
+                            continue
+                        d = json.loads(line)
+                        msg = d.get("message", {})
+                        model = msg.get("model", "")
+                        if not model or model == "<synthetic>":
+                            continue
+                        usage = msg.get("usage", {})
+                        if not usage:
+                            continue
+                        it = usage.get("input_tokens", 0)
+                        ot = usage.get("output_tokens", 0)
+                        cr = usage.get("cache_read_input_tokens", 0)
+                        cc = usage.get("cache_creation_input_tokens", 0)
+
+                        if model not in cumulative:
+                            cumulative[model] = {"inputTokens": 0, "outputTokens": 0,
+                                                  "cacheReadInputTokens": 0, "cacheCreationInputTokens": 0}
+                        cumulative[model]["inputTokens"] += it
+                        cumulative[model]["outputTokens"] += ot
+                        cumulative[model]["cacheReadInputTokens"] += cr
+                        cumulative[model]["cacheCreationInputTokens"] += cc
+
+                        ts = d.get("timestamp", "")
+                        date = ts[:10] if ts else ""
+                        if date:
+                            if date not in daily:
+                                daily[date] = {}
+                            if model not in daily[date]:
+                                daily[date][model] = 0
+                            daily[date][model] += it + ot
+                except Exception:
+                    continue
+
+        _JSONL_CACHE = cumulative
+        _JSONL_DAILY_CACHE = daily
+        _JSONL_CACHE_TIME = now
+
+    def _read_jsonl_model_usage(self, exclude_models: set) -> dict[str, dict]:
+        """stats-cache에 없는 모델만 반환 (double-count 방지)."""
+        self._build_jsonl_cache()
+        return {m: v for m, v in _JSONL_CACHE.items() if m not in exclude_models}
+
+    def _merged_model_usage(self) -> dict[str, dict]:
+        """stats-cache + JSONL 보완 데이터 병합."""
+        stats = self._read_stats_cache()
+        model_usage = dict(stats.get("modelUsage", {}))
+        extra = self._read_jsonl_model_usage(exclude_models=set(model_usage.keys()))
+        model_usage.update(extra)
+        return model_usage
+
     def get_summary(self) -> dict[str, Any]:
         stats = self._read_stats_cache()
         if not stats:
             return {"total_sessions": 0, "total_messages": 0, "model_count": 0, "total_cost_usd": 0}
 
-        model_usage = stats.get("modelUsage", {})
+        model_usage = self._merged_model_usage()
         cost = self._calculate_total_cost(model_usage)
 
         return {
@@ -70,8 +143,7 @@ class ClaudeUsageCollector:
         return stats.get("dailyActivity", [])
 
     def get_model_usage(self) -> list[dict[str, Any]]:
-        stats = self._read_stats_cache()
-        model_usage = stats.get("modelUsage", {})
+        model_usage = self._merged_model_usage()
         result = []
         for model_id, usage in model_usage.items():
             pricing = PRICING.get(model_id, DEFAULT_PRICING)
@@ -98,11 +170,24 @@ class ClaudeUsageCollector:
 
     def get_daily_model_tokens(self) -> list[dict[str, Any]]:
         stats = self._read_stats_cache()
-        return stats.get("dailyModelTokens", [])
+        base = {entry["date"]: dict(entry["tokensByModel"])
+                for entry in stats.get("dailyModelTokens", [])}
+
+        # JSONL에서 stats-cache에 없는 모델의 날짜별 토큰 보완
+        self._build_jsonl_cache()
+        cached_models = set(stats.get("modelUsage", {}).keys())
+        for date, model_tokens in _JSONL_DAILY_CACHE.items():
+            for model, tokens in model_tokens.items():
+                if model in cached_models:
+                    continue  # 이미 stats-cache에 있는 모델은 skip
+                if date not in base:
+                    base[date] = {}
+                base[date][model] = base[date].get(model, 0) + tokens
+
+        return [{"date": d, "tokensByModel": m} for d, m in sorted(base.items())]
 
     def get_cost_breakdown(self) -> dict[str, Any]:
-        stats = self._read_stats_cache()
-        model_usage = stats.get("modelUsage", {})
+        model_usage = self._merged_model_usage()
         models = []
         total_cost = 0.0
 
