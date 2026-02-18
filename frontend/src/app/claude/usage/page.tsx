@@ -9,12 +9,19 @@ export default function ClaudeUsagePage() {
   const { data: dailyModels } = useClaudeDailyModels();
   const { data: modelUsage } = useClaudeModelUsage();
 
-  // Get all unique models
+  // Get all unique models, sorted by priority
+  const MODEL_ORDER = ["opus-4-6", "sonnet-4-6", "haiku-4-5", "opus-4-5", "sonnet-4-5"];
+  const sortModels = (a: string, b: string) => {
+    const ai = MODEL_ORDER.findIndex((p) => a.includes(p));
+    const bi = MODEL_ORDER.findIndex((p) => b.includes(p));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  };
   const allModels = new Set<string>();
   (dailyModels ?? []).forEach((d) => {
     Object.keys(d.tokensByModel).forEach((m) => allModels.add(m));
   });
-  const models = Array.from(allModels);
+  const models = Array.from(allModels).sort(sortModels);
+  const sortedModelUsage = [...(modelUsage ?? [])].sort((a, b) => sortModels(a.model, b.model));
 
   // Build per-model daily time series
   const modelColors: Record<string, string> = {};
@@ -93,7 +100,7 @@ export default function ClaudeUsagePage() {
             ),
           },
         ]}
-        data={(modelUsage ?? []) as unknown as Record<string, unknown>[]}
+        data={sortedModelUsage as unknown as Record<string, unknown>[]}
         maxHeight="400px"
       />
     </div>
